@@ -1,0 +1,46 @@
+
+name: Generate Chess Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      time_limit:
+        description: 'Time limit per job in seconds'
+        required: true
+        default: '600'  # 10 minutes
+
+jobs:
+  generate-data:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        job_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake python3 python3-pip
+        pip3 install numpy
+
+    - name: Build Engine
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j2
+    
+    - name: Generate Data
+      run: |
+        # Run generator for specified time
+        # The script now supports --time argument
+        python3 generate_training_data_sparse.py --time ${{ github.event.inputs.time_limit }}
+        mv training_data_sparse.bin data_part_${{ matrix.job_id }}.bin
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: training-data-part-${{ matrix.job_id }}
+        path: data_part_${{ matrix.job_id }}.bin

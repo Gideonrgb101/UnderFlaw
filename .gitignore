@@ -1,0 +1,30 @@
+# Build artifacts
+build/
+*.exe
+*.obj
+*.o
+*.a
+*.lib
+*.dll
+*.pdb
+
+# Training data (too large)
+training_data.bin
+training_data_sparse.bin
+data_part_*.bin
+checkpoint.pt
+
+# Logs
+generator.log
+
+# Temporary test artifacts
+tests/*.exe
+tests/*.obj
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+__pycache__/
+*.pyc
