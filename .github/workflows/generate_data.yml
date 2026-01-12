@@ -32,10 +32,21 @@ jobs:
         cmake .. -DCMAKE_BUILD_TYPE=Release
         make -j2
     
-    - name: Generate Data
+    - name: Debug and Generate Data
       run: |
-        # Run generator for specified time
-        # The script now supports --time argument
+        # Debug: Check binary location and permissions
+        echo "Listing build directory:"
+        ls -R build
+        
+        # Ensure correct permissions if found
+        if [ -f build/bin/UnderFlaw ]; then
+            chmod +x build/bin/UnderFlaw
+        fi
+        if [ -f build/UnderFlaw ]; then
+            chmod +x build/UnderFlaw
+        fi
+
+        # Run generator
         python3 generate_training_data_sparse.py --time ${{ github.event.inputs.time_limit }}
         mv training_data_sparse.bin data_part_${{ matrix.job_id }}.bin
 
