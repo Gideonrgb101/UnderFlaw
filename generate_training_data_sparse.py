@@ -111,10 +111,6 @@ def play_single_game(game_id):
         else:
              # Fallback to local
             engine_path = './UnderFlaw'
-            print(f"WARNING: Could not find engine. CWD: {os.getcwd()}")
-            print(f"Files in CWD: {os.listdir('.')}")
-            if os.path.exists('build'):
-                print(f"Files in build: {os.listdir('build')}")
             
     try:
         engine = subprocess.Popen(
