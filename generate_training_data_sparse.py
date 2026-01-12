@@ -104,6 +104,8 @@ def play_single_game(game_id):
         # Linux paths (try standard build output)
         if os.path.exists('build/bin/UnderFlaw'):
             engine_path = 'build/bin/UnderFlaw'
+        elif os.path.exists('build/UnderFlaw'):
+            engine_path = 'build/UnderFlaw'
         elif os.path.exists('./UnderFlaw'):
             engine_path = './UnderFlaw'
         else:
@@ -121,7 +123,7 @@ def play_single_game(game_id):
             universal_newlines=True
         )
     except Exception as e:
-        # print(f"Worker {game_id}: Failed to start engine at {engine_path}: {e}")
+        print(f"Worker {game_id}: Failed to start engine at {engine_path}: {e}")
         return []
 
     moves = []
