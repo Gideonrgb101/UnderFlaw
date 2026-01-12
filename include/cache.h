@@ -1,8 +1,10 @@
 #ifndef CACHE_H
 #define CACHE_H
 
-#include <stdint.h>
 #include "types.h"
+#include <stddef.h>
+#include <stdint.h>
+
 
 // ============================================================================
 // CACHE AND MEMORY OPTIMIZATION UTILITIES
@@ -41,17 +43,16 @@
 
 // Macro for declaring a stack-allocated move list
 // Usage: STACK_MOVELIST(my_moves);
-#define STACK_MOVELIST(name)       \
-    Move name##_buffer[MAX_MOVES]; \
-    int name##_count = 0
+#define STACK_MOVELIST(name)                                                   \
+  Move name##_buffer[MAX_MOVES];                                               \
+  int name##_count = 0
 
 // Macros for manipulating stack move lists
-#define MOVELIST_ADD(name, move)                    \
-    do                                              \
-    {                                               \
-        if (name##_count < MAX_MOVES)               \
-            name##_buffer[name##_count++] = (move); \
-    } while (0)
+#define MOVELIST_ADD(name, move)                                               \
+  do {                                                                         \
+    if (name##_count < MAX_MOVES)                                              \
+      name##_buffer[name##_count++] = (move);                                  \
+  } while (0)
 
 #define MOVELIST_COUNT(name) (name##_count)
 #define MOVELIST_GET(name, idx) (name##_buffer[idx])
@@ -64,7 +65,8 @@
 // Upper 16 bits = endgame, Lower 16 bits = middlegame
 typedef int32_t PackedScore;
 
-#define PACK_SCORE(mg, eg) ((PackedScore)(((int32_t)(eg) << 16) + (int32_t)(mg)))
+#define PACK_SCORE(mg, eg)                                                     \
+  ((PackedScore)(((int32_t)(eg) << 16) + (int32_t)(mg)))
 #define UNPACK_MG(s) ((int16_t)((s) & 0xFFFF))
 #define UNPACK_EG(s) ((int16_t)((s) >> 16))
 
@@ -75,42 +77,38 @@ typedef int32_t PackedScore;
 #define PACKED_SUB(a, b) ((a) - (b))
 
 // Interpolate between MG and EG based on phase (0 = endgame, 256 = opening)
-static inline Score interpolate_packed(PackedScore ps, int phase)
-{
-    int mg = UNPACK_MG(ps);
-    int eg = UNPACK_EG(ps);
-    return (Score)((mg * phase + eg * (256 - phase)) / 256);
+static inline Score interpolate_packed(PackedScore ps, int phase) {
+  int mg = UNPACK_MG(ps);
+  int eg = UNPACK_EG(ps);
+  return (Score)((mg * phase + eg * (256 - phase)) / 256);
 }
 
 // ===== CACHE-ALIGNED PST STRUCTURE =====
 
-// Each PST is 64 entries of PackedScore (4 bytes each = 256 bytes = 4 cache lines)
-// We align each PST to cache line boundary
-typedef struct
-{
-    PackedScore values[64];
+// Each PST is 64 entries of PackedScore (4 bytes each = 256 bytes = 4 cache
+// lines) We align each PST to cache line boundary
+typedef struct {
+  PackedScore values[64];
 } CACHE_ALIGN_ATTR AlignedPST;
 
 // Complete set of PSTs for one color
-typedef struct
-{
-    AlignedPST pawn;
-    AlignedPST knight;
-    AlignedPST bishop;
-    AlignedPST rook;
-    AlignedPST queen;
-    AlignedPST king_mg; // Middlegame king (castled)
-    AlignedPST king_eg; // Endgame king (centralized)
+typedef struct {
+  AlignedPST pawn;
+  AlignedPST knight;
+  AlignedPST bishop;
+  AlignedPST rook;
+  AlignedPST queen;
+  AlignedPST king_mg; // Middlegame king (castled)
+  AlignedPST king_eg; // Endgame king (centralized)
 } CACHE_ALIGN_ATTR PSTSet;
 
 // Material values packed (MG, EG)
-typedef struct
-{
-    PackedScore pawn;
-    PackedScore knight;
-    PackedScore bishop;
-    PackedScore rook;
-    PackedScore queen;
+typedef struct {
+  PackedScore pawn;
+  PackedScore knight;
+  PackedScore bishop;
+  PackedScore rook;
+  PackedScore queen;
 } CACHE_ALIGN_ATTR PackedMaterial;
 
 // ===== MEMORY POOL FOR SMALL ALLOCATIONS =====
@@ -119,12 +117,11 @@ typedef struct
 #define MEMPOOL_BLOCK_SIZE 4096
 #define MEMPOOL_MAX_BLOCKS 64
 
-typedef struct
-{
-    char *blocks[MEMPOOL_MAX_BLOCKS];
-    int num_blocks;
-    int current_block;
-    int offset; // Current offset in current block
+typedef struct {
+  char *blocks[MEMPOOL_MAX_BLOCKS];
+  int num_blocks;
+  int current_block;
+  int offset; // Current offset in current block
 } MemPool;
 
 // Initialize memory pool
@@ -142,16 +139,14 @@ void mempool_destroy(MemPool *pool);
 // ===== BITBOARD OPERATIONS (CACHE-FRIENDLY) =====
 
 // Count bits in multiple bitboards at once (better instruction pipelining)
-static inline void popcount_multi(const uint64_t *bbs, int *counts, int n)
-{
-    for (int i = 0; i < n; i++)
-    {
+static inline void popcount_multi(const uint64_t *bbs, int *counts, int n) {
+  for (int i = 0; i < n; i++) {
 #ifdef _MSC_VER
-        counts[i] = (int)__popcnt64(bbs[i]);
+    counts[i] = (int)__popcnt64(bbs[i]);
 #else
-        counts[i] = __builtin_popcountll(bbs[i]);
+    counts[i] = __builtin_popcountll(bbs[i]);
 #endif
-    }
+  }
 }
 
 // ===== BRANCH PREDICTION HINTS =====
@@ -177,15 +172,14 @@ static inline void popcount_multi(const uint64_t *bbs, int *counts, int n)
 // ===== PACKED PST INITIALIZATION =====
 
 void init_packed_pst(AlignedPST *pst, const int *mg_table, const int *eg_table);
-void init_packed_material(PackedMaterial *mat,
-                          int pawn_mg, int pawn_eg,
-                          int knight_mg, int knight_eg,
-                          int bishop_mg, int bishop_eg,
-                          int rook_mg, int rook_eg,
-                          int queen_mg, int queen_eg);
+void init_packed_material(PackedMaterial *mat, int pawn_mg, int pawn_eg,
+                          int knight_mg, int knight_eg, int bishop_mg,
+                          int bishop_eg, int rook_mg, int rook_eg, int queen_mg,
+                          int queen_eg);
 
 // Evaluate pieces using packed PST (returns packed score)
-PackedScore evaluate_pieces_packed(const AlignedPST *pst, uint64_t pieces, int flip);
+PackedScore evaluate_pieces_packed(const AlignedPST *pst, uint64_t pieces,
+                                   int flip);
 
 // Prefetch PST entries for upcoming evaluation
 void prefetch_pst_entries(const AlignedPST *pst, uint64_t pieces);

@@ -354,15 +354,6 @@ static void update_capture_history(SearchState *state, int attacker, int to_sq,
   }
 }
 
-static int get_capture_history(SearchState *state, int attacker, int to_sq,
-                               int victim) {
-  if (attacker >= 0 && attacker < 6 && to_sq >= 0 && to_sq < 64 &&
-      victim >= 0 && victim < 6) {
-    return state->capture_history[attacker][to_sq][victim];
-  }
-  return 0;
-}
-
 static void update_followup_history(SearchState *state, int prev_piece,
                                     int prev_to, int piece, int to_sq,
                                     int depth) {
@@ -376,15 +367,6 @@ static void update_followup_history(SearchState *state, int prev_piece,
     if (*entry < -HISTORY_MAX)
       *entry = -HISTORY_MAX;
   }
-}
-
-static int get_followup_history(SearchState *state, int prev_piece, int prev_to,
-                                int piece, int to_sq) {
-  if (prev_piece >= 0 && prev_piece < 6 && prev_to >= 0 && prev_to < 64 &&
-      piece >= 0 && piece < 6 && to_sq >= 0 && to_sq < 64) {
-    return state->followup_history[prev_piece][prev_to][piece][to_sq];
-  }
-  return 0;
 }
 
 // ===== REPETITION DETECTION =====
@@ -922,31 +904,6 @@ static int score_move_for_ordering(SearchState *state, Position *pos, Move move,
 
 // Simple move ordering: sort moves based on score
 // We'll use a simple bubble sort since move lists are typically < 256 moves
-static void order_moves(SearchState *state, Position *pos, MoveList *moves,
-                        int ply) {
-  // Store scores for each move
-  int scores[256];
-  for (int i = 0; i < moves->count; i++) {
-    scores[i] = score_move_for_ordering(state, pos, moves->moves[i], ply);
-  }
-
-  // Simple bubble sort by score (descending)
-  for (int i = 0; i < moves->count - 1; i++) {
-    for (int j = i + 1; j < moves->count; j++) {
-      if (scores[j] > scores[i]) {
-        // Swap moves
-        Move temp_move = moves->moves[i];
-        moves->moves[i] = moves->moves[j];
-        moves->moves[j] = temp_move;
-
-        // Swap scores
-        int temp_score = scores[i];
-        scores[i] = scores[j];
-        scores[j] = temp_score;
-      }
-    }
-  }
-}
 
 static Score alpha_beta(SearchState *state, Position *pos, int depth,
                         Score alpha, Score beta) {
