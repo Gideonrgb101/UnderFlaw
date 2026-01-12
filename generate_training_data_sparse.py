@@ -214,30 +214,23 @@ def generate_positions():
     start_time = time.time()
     
     with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
-        results = [pool.apply_async(play_single_game, (i,)) for i in range(NUM_GAMES)]
+        # Use imap_unordered to process tasks one by one without enqueuing all 100M at once
+        # This prevents the memory usage from ballooning on cloud runners
+        results = pool.imap_unordered(play_single_game, range(NUM_GAMES), chunksize=1)
         
         games_done = 0
         total_pos = 0
         
         with open(OUTPUT_FILE, mode) as f:
-            for res in results:
-                # No time limit check
-                
-                try:
-                    # Wait indefinitely for next result
-                    batch = res.get(timeout=0.1)
-                except KeyboardInterrupt:
-                    print("\nStopping by user request...")
+            for batch in results:
+                # Check time limit
+                if TIME_LIMIT and (time.time() - start_time) > TIME_LIMIT:
+                    print(f"\nTime limit reached ({TIME_LIMIT}s). Stopping...")
                     pool.terminate()
                     break
-                except multiprocessing.TimeoutError:
-                    if TIME_LIMIT and (time.time() - start_time) > TIME_LIMIT:
-                        print(f"\nTime limit reached ({TIME_LIMIT}s). Stopping...")
-                        pool.terminate()
-                        break
+                
+                if not batch: 
                     continue
-                except Exception:
-                    continue # Skip failed games
                 
                 games_done += 1
                 for item in batch:
@@ -255,6 +248,9 @@ def generate_positions():
                     elapsed = time.time() - start_time
                     size_mb = os.path.getsize(OUTPUT_FILE) / (1024*1024)
                     print(f"Progress: {games_done} games ({total_pos} pos) - {elapsed/60:.1f} min - {size_mb:.2f} MB")
+                
+                if games_done >= NUM_GAMES:
+                    break
     
     allow_sleep() 
     print("Done.")

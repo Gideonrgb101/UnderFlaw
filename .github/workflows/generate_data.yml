@@ -31,7 +31,20 @@ jobs:
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release
         make -j2
-    
+
+    - name: Engine Sanity Check
+      run: |
+        # Confirm engine binary exists and can respond to 'uci'
+        ENGINE_BIN="build/bin/UnderFlaw"
+        if [ ! -f "$ENGINE_BIN" ]; then
+            ENGINE_BIN="build/UnderFlaw"
+        fi
+        
+        echo "Testing engine startup..."
+        chmod +x "$ENGINE_BIN"
+        echo "uci" | "$ENGINE_BIN" | grep "uciok"
+        echo "Sanity check passed!"
+
     - name: Debug and Generate Data
       run: |
         # Debug: Check binary location and permissions
