@@ -12,7 +12,7 @@ import sys
 NUM_GAMES = 100000000     # 100 Million games (effectively infinite)
 TIME_LIMIT = None         # No time limit (run until stopped)
 NUM_WORKERS = max(1, multiprocessing.cpu_count() - 2)
-SEARCH_DEPTH = 5
+SEARCH_DEPTH = 7
 OUTPUT_FILE = 'training_data_sparse.bin'
 
 # Constants matching engine
