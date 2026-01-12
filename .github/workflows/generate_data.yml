@@ -17,7 +17,7 @@ jobs:
         job_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
@@ -40,7 +40,7 @@ jobs:
         mv training_data_sparse.bin data_part_${{ matrix.job_id }}.bin
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: training-data-part-${{ matrix.job_id }}
         path: data_part_${{ matrix.job_id }}.bin
